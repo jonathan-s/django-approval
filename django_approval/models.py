@@ -1,14 +1,18 @@
 # -*- coding: utf-8 -*-
-
+from django.apps import apps
 from django.db import models
+from django.contrib.postgres.fields import JSONField
 from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
+from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import gettext_lazy as _
 
 from model_utils.models import TimeStampedModel
 
 from .choices import Status
 from .choices import Action
+from .manager import ApprovalManager
 
 
 class Approval(TimeStampedModel):
@@ -16,7 +20,6 @@ class Approval(TimeStampedModel):
     Action tells us what the approval object is about
     Status tells us whether the action was approved or rejected.
     '''
-
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     # if we create an object, we don't yet have an object it is referring to.
     object_id = models.PositiveIntegerField(null=True)
@@ -33,21 +36,21 @@ class Approval(TimeStampedModel):
         help_text=_('The reason for this change'),
         blank=True
     )
+    source = JSONField(encoder=DjangoJSONEncoder, help_text='The fields as they would be saved.')
+
     # contains html output of a diff for all fields.
     # possibly we would like the diff to be compared with current
     # object to what is stored as a change.
-
     # there is no diff for new objects.
     diff = models.TextField()
     # change = models. json field, with all the changes per field.
     # change = what changed.
 
+    objects = ApprovalManager()
+
     class Meta:
         verbose_name = _('approval')
         verbose_name_plural = _('approvals')
-        # can't determine any unique status.
-        # status can occur several times.
-        # unique_together = (('content_type', 'object_id', 'status'),)
         ordering = (
             'content_type__app_label',
             'content_type__model',
@@ -57,4 +60,13 @@ class Approval(TimeStampedModel):
     def natural_key(self):
         return (self.object_id,) + self.content_type.natural_key()
     natural_key.dependencies = ['contenttypes.contenttype']
+
+    def get_model(self):
+        return apps.get_model(
+            self.content_object.app_name, self.content_object.model
+        )
+
+
+class ApprovableModelMixin:
+    approvals = GenericRelation(Approval)
 
