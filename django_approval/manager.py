@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 
 
-class ApprovalQueryset(models.Queryset):
+class ApprovalQueryset(models.QuerySet):
     def for_model(self, model, queryset=None):
         if queryset is None:
             queryset = model.objects.all()
@@ -27,5 +27,5 @@ class ApprovalManager(models.Manager):
         return Model.objects.get(pk=object_id)
 
 
-class ApprovableQueryset(models.Queryset):
+class ApprovableQueryset(models.QuerySet):
     pass
