@@ -12,6 +12,7 @@ flake8 = ">=2.1.0"
 tox = ">=1.7.0"
 codecov = ">=2.0.0"
 twine  = "*"
+factory_boy = "*"
 
 [packages]
 django-choices = "*"
