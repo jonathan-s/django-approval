@@ -3,7 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 
 import factory
 
-from ..models import Approval
+from django_approvals.models import Approval
 
 
 class UserFactory(factory.django.DjangoModelFactory):

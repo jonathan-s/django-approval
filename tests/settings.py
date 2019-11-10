@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     'django.contrib.sessions',
     "django_approval",
+    "django_approval.test_utils.test_app"
 ]
 
 SITE_ID = 1
