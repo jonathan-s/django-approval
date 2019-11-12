@@ -36,7 +36,7 @@ class FormUsingApproval(forms.ModelForm):
         # if we don't have a pk for instance it's definitely a new
 
         content_type = ContentType.objects.get_for_model(self.Meta.model)
-        action = Action.update if self.instance.pk else Action.new
+        action = Action.update if self.instance.pk else Action.create
         source = serialize('json', [self.instance])
 
         if self.need_approval():

@@ -4,9 +4,9 @@ from djchoices import DjangoChoices, ChoiceItem
 
 
 class Action(DjangoChoices):
-    new = ChoiceItem('new', _('New'))
+    create = ChoiceItem('create', _('Create'))
     update = ChoiceItem('update', _('Update'))
-    deleted = ChoiceItem('deleted', _('Deleted'))
+    delete = ChoiceItem('delete', _('Delete'))
 
 
 class Status(DjangoChoices):

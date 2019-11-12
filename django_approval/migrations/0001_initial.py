@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
                 ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
                 ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
                 ('object_id', models.PositiveIntegerField(null=True)),
-                ('action', models.CharField(choices=[('new', 'New'), ('update', 'Update'), ('deleted', 'Deleted')], max_length=8)),
+                ('action', models.CharField(choices=[('create', 'Create'), ('update', 'Update'), ('delete', 'Delete')], max_length=8)),
                 ('status', models.CharField(blank=True, choices=[('approved', 'Approved'), ('rejected', 'Rejected'), ('', 'No action taken')], default='', max_length=8)),
                 ('comment', models.CharField(blank=True, help_text='The reason for this change', max_length=255)),
                 ('source', django.contrib.postgres.fields.jsonb.JSONField(encoder=django.core.serializers.json.DjangoJSONEncoder, help_text='The fields as they would be saved.')),

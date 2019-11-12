@@ -34,7 +34,7 @@ class UsingApprovalFormTest(TestCase):
         self.assertEqual(isinstance(instance, models.Approval), True)
         self.assertJSONEqual(serialized, instance.source)
         self.assertEqual(instance.status, choices.Status.none)
-        self.assertEqual(instance.action, choices.Action.new)
+        self.assertEqual(instance.action, choices.Action.create)
         self.assertEqual(instance.object_id, None)
         self.assertEqual(instance.content_object, None)
 

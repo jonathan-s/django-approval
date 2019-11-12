@@ -28,7 +28,7 @@ class ApprovalFactory(factory.django.DjangoModelFactory):
     content_type = factory.LazyAttribute(
         lambda o: ContentType.objects.get_for_model(o.content_object)
     )
-    action = Action.new
+    action = Action.create
     status = Status.none
     source = {}
 
