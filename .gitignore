@@ -47,3 +47,4 @@ output/*/index.html
 # Sphinx
 docs/_build
 notes.md
+venv
