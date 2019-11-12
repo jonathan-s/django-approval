@@ -1,9 +1,9 @@
 from django_approval.forms import FormUsingApproval
-from django_approval.test_utils.test_app.models import TestModel
+from django_approval.test_utils.test_app.models import Child
 
 
-class TestModelForm(FormUsingApproval):
+class ChildModelForm(FormUsingApproval):
 
     class Meta:
-        model = TestModel
+        model = Child
         fields = '__all__'

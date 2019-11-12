@@ -5,7 +5,9 @@ import factory
 
 from django_approval.models import Approval
 from django_approval.choices import Action, Status
-from django_approval.test_utils.test_app.models import TestModel
+from django_approval.test_utils.test_app.models import Child, Parent
+
+CHILD_PATH = 'django_approval.test_utils.factories.ChildFactory'
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -13,14 +15,6 @@ class UserFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = User
-
-
-class TestModelFactory(factory.django.DjangoModelFactory):
-    field1 = factory.Sequence(lambda n: 'field1-%04d' % n)
-    field2 = factory.Sequence(lambda n: 'field2-%04d' % n)
-
-    class Meta:
-        model = TestModel
 
 
 class ApprovalFactory(factory.django.DjangoModelFactory):
@@ -37,8 +31,24 @@ class ApprovalFactory(factory.django.DjangoModelFactory):
         abstract = True
 
 
-class TestModelApprovalFactory(ApprovalFactory):
-    content_object = factory.SubFactory(TestModelFactory)
+class ChildApprovalFactory(ApprovalFactory):
+    content_object = factory.SubFactory(CHILD_PATH)
 
     class Meta:
         model = Approval
+
+
+class ParentFactory(factory.django.DjangoModelFactory):
+    children = factory.SubFactory(CHILD_PATH)
+
+    class Meta:
+        model = Parent
+
+
+class ChildFactory(factory.django.DjangoModelFactory):
+    field1 = factory.Sequence(lambda n: 'field1-%04d' % n)
+    field2 = factory.Sequence(lambda n: 'field2-%04d' % n)
+    parent = factory.RelatedFactory(ParentFactory, 'children')
+
+    class Meta:
+        model = Child

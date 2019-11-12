@@ -7,17 +7,17 @@ from django.core.serializers import serialize
 from django_approval import models
 from django_approval.choices import Status, Action
 from django_approval.test_utils import factories as factory
-from django_approval.test_utils.test_app.models import TestModel
+from django_approval.test_utils.test_app.models import Child
 
 
 class ApprovalModelTest(TestCase):
 
     def setUp(self):
         self.data = {'field1': 'test1', 'field2': 'test2'}
-        instance = TestModel(**self.data)
+        instance = Child(**self.data)
         serialized = serialize('json', [instance])
-        self.approval = factory.TestModelApprovalFactory()
-        self.test_inst = TestModel.objects.first()
+        self.approval = factory.ChildApprovalFactory()
+        self.test_inst = Child.objects.first()
         self.user = factory.UserFactory()
         self.approval.object_id = None
         self.approval.source = serialized
@@ -26,13 +26,13 @@ class ApprovalModelTest(TestCase):
     def test_approve_approval(self):
         '''Changes the status method to approved and creates target object'''
         values = set(self.data.values())
-        count = TestModel.objects.count()
+        count = Child.objects.count()
         self.approval.approve()
         object_values = set(self.approval.content_object.__dict__.values())
 
         self.assertEqual(self.approval.status, Status.approved)
         self.assertEqual(values.issubset(object_values), True, (values, object_values))
-        self.assertEqual(count + 1, TestModel.objects.count())
+        self.assertEqual(count + 1, Child.objects.count())
         self.assertIsNotNone(self.approval.object_id)
 
     def test_raise_inconsistent_error(self):
@@ -43,11 +43,11 @@ class ApprovalModelTest(TestCase):
 
     def test_reject_approval(self):
         '''Changes status to rejected, does not create anything; it was rejected'''
-        count = TestModel.objects.count()
+        count = Child.objects.count()
         self.approval.reject()
 
         self.assertEqual(self.approval.status, Status.rejected)
-        self.assertEqual(count, TestModel.objects.count())
+        self.assertEqual(count, Child.objects.count())
 
     def test_approve_stores_who_did_it(self):
         '''We want to track who approved an approval'''
@@ -68,7 +68,7 @@ class ApprovalModelTest(TestCase):
         self.approval.approve()
         self.approval.refresh_from_db()
 
-        obj_count = TestModel.objects.filter(pk=self.test_inst.pk).count()
+        obj_count = Child.objects.filter(pk=self.test_inst.pk).count()
         self.assertEqual(obj_count, 0)
         self.assertEqual(self.approval.object_id, None)
         self.assertEqual(self.approval.status, Status.approved)

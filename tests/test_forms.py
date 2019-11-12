@@ -8,7 +8,7 @@ from django_approval import models
 from django_approval import choices
 from django_approval.test_utils import factories as factory
 from django_approval.test_utils.test_app import forms
-from django_approval.test_utils.test_app.models import TestModel
+from django_approval.test_utils.test_app.models import Child
 
 
 class UsingApprovalFormTest(TestCase):
@@ -19,14 +19,14 @@ class UsingApprovalFormTest(TestCase):
             'field2': 'world'
         }
         self.request = RequestFactory()
-        self.form = forms.TestModelForm(self.initial, request=self.request)
+        self.form = forms.ChildModelForm(self.initial, request=self.request)
 
     def test_approval_is_created_when_using_approval_form(self):
-        '''An approval instance is created instead of TestModel instance
+        '''An approval instance is created instead of Child instance
         since this form will prevent any creation of TestModels'''
 
         self.assertEqual(self.form.is_valid(), True, self.form.errors)
-        test_inst = TestModel(**self.initial)
+        test_inst = Child(**self.initial)
         serialized = serialize('json', [test_inst])
         instance = self.form.save()
 
@@ -40,12 +40,12 @@ class UsingApprovalFormTest(TestCase):
 
     def test_approval_for_existing_object(self):
         '''An existing object will create an approval to update that object'''
-        test_inst = TestModel(**self.initial)
+        test_inst = Child(**self.initial)
         test_inst.save()
         data = {'field1': 'update', 'field2': 'update2'}
-        updated_obj = TestModel(id=test_inst.pk, **data)
+        updated_obj = Child(id=test_inst.pk, **data)
         serialized = serialize('json', [updated_obj])
-        form = forms.TestModelForm(data=data, instance=test_inst)
+        form = forms.ChildModelForm(data=data, instance=test_inst)
 
         self.assertEqual(form.is_valid(), True, form.errors)
         instance = form.save()
@@ -62,5 +62,9 @@ class UsingApprovalFormTest(TestCase):
         '''The form allows a request argument'''
         self.assertEqual(self.form.request, self.request)
 
-    def tearDown(self):
+    def test_approval_with_partial_update(self):
+        '''Form contains partial data for an update, no fields are overwritten'''
+        pass
+
+    def test_be_able_to_leave_a_comment_through_the_form(self):
         pass
