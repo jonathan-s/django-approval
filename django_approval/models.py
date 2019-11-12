@@ -77,6 +77,14 @@ class Approval(TimeStampedModel):
         if self.action == Action.update and not self.object_id:
             msg = _('Inconsistent state: an update always need an object_id')
             raise ValueError(msg)
+
+        if self.action == Action.delete:
+            self.content_object.delete()
+            self.object_id = None
+            self.status = Status.approved
+            self.save()
+            return
+
         deserialized_obj = next(deserialize('json', self.source))
         obj = deserialized_obj.object
         obj.save()

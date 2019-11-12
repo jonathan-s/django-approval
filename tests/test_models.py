@@ -17,6 +17,7 @@ class ApprovalModelTest(TestCase):
         instance = TestModel(**self.data)
         serialized = serialize('json', [instance])
         self.approval = factory.TestModelApprovalFactory()
+        self.test_inst = TestModel.objects.first()
         self.user = factory.UserFactory()
         self.approval.object_id = None
         self.approval.source = serialized
@@ -58,5 +59,20 @@ class ApprovalModelTest(TestCase):
         self.approval.reject(self.user)
         self.assertEqual(self.approval.changed_by, self.user)
 
-    def tearDown(self):
+    def test_an_approval_where_action_is_delete(self):
+        '''The object should then be removed'''
+        self.approval.action = Action.delete
+        self.approval.object_id = self.test_inst.pk
+        self.approval.save()
+
+        self.approval.approve()
+        self.approval.refresh_from_db()
+
+        obj_count = TestModel.objects.filter(pk=self.test_inst.pk).count()
+        self.assertEqual(obj_count, 0)
+        self.assertEqual(self.approval.object_id, None)
+        self.assertEqual(self.approval.status, Status.approved)
+
+    def test_test_model_has_approvals(self):
+        '''Test Model has an easily accessible approvals'''
         pass
