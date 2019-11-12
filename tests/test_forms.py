@@ -1,0 +1,64 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from django.test import TestCase
+from django.core.serializers import serialize
+
+from django_approval import models
+from django_approval import choices
+from django_approval.test_utils import factories as factory
+from django_approval.test_utils.test_app import forms
+from django_approval.test_utils.test_app.models import TestModel
+
+
+class UsingApprovalFormTest(TestCase):
+
+    def setUp(self):
+        self.initial = {
+            'field1': 'hello',
+            'field2': 'world'
+        }
+        self.form = forms.TestModelForm(self.initial)
+
+    def test_approval_is_created_when_using_approval_form(self):
+        '''An approval instance is created instead of TestModel instance
+        since this form will prevent any creation of TestModels'''
+
+        self.assertEqual(self.form.is_valid(), True, self.form.errors)
+        test_inst = TestModel(**self.initial)
+        serialized = serialize('json', [test_inst])
+        instance = self.form.save()
+
+        self.assertEqual(models.Approval.objects.count(), 1)
+        self.assertEqual(isinstance(instance, models.Approval), True)
+        self.assertJSONEqual(serialized, instance.source)
+        self.assertEqual(instance.status, choices.Status.none)
+        self.assertEqual(instance.action, choices.Action.new)
+        self.assertEqual(instance.object_id, None)
+        self.assertEqual(instance.content_object, None)
+
+    def test_approval_for_existing_object(self):
+        '''An existing object will create an approval to update that object'''
+        test_inst = TestModel(**self.initial)
+        test_inst.save()
+        data = {'field1': 'update', 'field2': 'update2'}
+        updated_obj = TestModel(id=test_inst.pk, **data)
+        serialized = serialize('json', [updated_obj])
+        form = forms.TestModelForm(data=data, instance=test_inst)
+
+        self.assertEqual(form.is_valid(), True, form.errors)
+        instance = form.save()
+
+        self.assertEqual(models.Approval.objects.count(), 1)
+        self.assertEqual(isinstance(instance, models.Approval), True)
+        self.assertEqual(instance.status, choices.Status.none)
+        self.assertEqual(instance.action, choices.Action.update)
+        self.assertEqual(instance.object_id, test_inst.pk)
+        self.assertEqual(instance.content_object, test_inst)
+        self.assertJSONEqual(serialized, instance.source)
+
+    def test_form_can_handle_request_argument(self):
+        pass
+
+    def tearDown(self):
+        pass

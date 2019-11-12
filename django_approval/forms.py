@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.contenttypes.models import ContentType
+from django.core.serializers import serialize
 
 from .models import Approval
 from .choices import Action, Status
@@ -36,14 +37,16 @@ class FormUsingApproval(forms.ModelForm):
 
         content_type = ContentType.objects.get_for_model(self.Meta.model)
         action = Action.update if self.instance.pk else Action.new
+        source = serialize('json', [self.instance])
 
         if self.need_approval():
             approval = Approval.objects.create(
+                object_id=self.instance.pk,
                 content_type=content_type,
                 action=action,
                 status=Status.none,
                 comment='',  # fix this later
-                source={},
+                source=source,
                 diff=''
             )
             self.instance = approval
