@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 from django.apps import apps
-from django.db import models
+from django.db import models, transaction
 from django.contrib.postgres.fields import JSONField
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
+from django.core.serializers import deserialize
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import gettext_lazy as _
 
@@ -65,6 +66,22 @@ class Approval(TimeStampedModel):
         return apps.get_model(
             self.content_object.app_name, self.content_object.model
         )
+
+    @transaction.atomic
+    def approve(self):
+        if self.action == Action.update and not self.object_id:
+            msg = _('Inconsistent state: an update always need an object_id')
+            raise ValueError(msg)
+        deserialized_obj = next(deserialize('json', self.source))
+        obj = deserialized_obj.object
+        obj.save()
+        self.status = Status.approved
+        self.object_id = obj.pk
+        self.save()
+
+    def reject(self):
+        self.status = Status.rejected
+        self.save()
 
 
 class ApprovableModelMixin:
