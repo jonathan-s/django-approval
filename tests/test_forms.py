@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from django.test import TestCase
+from django.test import TestCase, RequestFactory
 from django.core.serializers import serialize
 
 from django_approval import models
@@ -18,7 +18,8 @@ class UsingApprovalFormTest(TestCase):
             'field1': 'hello',
             'field2': 'world'
         }
-        self.form = forms.TestModelForm(self.initial)
+        self.request = RequestFactory()
+        self.form = forms.TestModelForm(self.initial, request=self.request)
 
     def test_approval_is_created_when_using_approval_form(self):
         '''An approval instance is created instead of TestModel instance
@@ -58,7 +59,8 @@ class UsingApprovalFormTest(TestCase):
         self.assertJSONEqual(serialized, instance.source)
 
     def test_form_can_handle_request_argument(self):
-        pass
+        '''The form allows a request argument'''
+        self.assertEqual(self.form.request, self.request)
 
     def tearDown(self):
         pass
