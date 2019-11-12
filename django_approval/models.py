@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.apps import apps
 from django.db import models, transaction
+from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.fields import GenericRelation
@@ -14,6 +15,9 @@ from model_utils.models import TimeStampedModel
 from .choices import Status
 from .choices import Action
 from .manager import ApprovalManager
+
+
+User = get_user_model()
 
 
 class Approval(TimeStampedModel):
@@ -37,6 +41,7 @@ class Approval(TimeStampedModel):
         help_text=_('The reason for this change'),
         blank=True
     )
+    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     source = JSONField(encoder=DjangoJSONEncoder, help_text='The fields as they would be saved.')
 
     # contains html output of a diff for all fields.
@@ -68,18 +73,20 @@ class Approval(TimeStampedModel):
         )
 
     @transaction.atomic
-    def approve(self):
+    def approve(self, user=None):
         if self.action == Action.update and not self.object_id:
             msg = _('Inconsistent state: an update always need an object_id')
             raise ValueError(msg)
         deserialized_obj = next(deserialize('json', self.source))
         obj = deserialized_obj.object
         obj.save()
+        self.changed_by = user
         self.status = Status.approved
         self.object_id = obj.pk
         self.save()
 
-    def reject(self):
+    def reject(self, user=None):
+        self.changed_by = user
         self.status = Status.rejected
         self.save()
 

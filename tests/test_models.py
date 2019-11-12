@@ -17,6 +17,7 @@ class ApprovalModelTest(TestCase):
         instance = TestModel(**self.data)
         serialized = serialize('json', [instance])
         self.approval = factory.TestModelApprovalFactory()
+        self.user = factory.UserFactory()
         self.approval.object_id = None
         self.approval.source = serialized
         self.approval.save()
@@ -46,6 +47,16 @@ class ApprovalModelTest(TestCase):
 
         self.assertEqual(self.approval.status, Status.rejected)
         self.assertEqual(count, TestModel.objects.count())
+
+    def test_approve_stores_who_did_it(self):
+        '''We want to track who approved an approval'''
+        self.approval.approve(self.user)
+        self.assertEqual(self.approval.changed_by, self.user)
+
+    def test_reject_with_user_stores_who_did_it(self):
+        '''We want to track who rejected an approval'''
+        self.approval.reject(self.user)
+        self.assertEqual(self.approval.changed_by, self.user)
 
     def tearDown(self):
         pass
