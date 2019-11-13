@@ -13,7 +13,8 @@ from django_approval.test_utils.test_app.models import Child
 class ApprovalModelTest(TestCase):
 
     def setUp(self):
-        self.data = {'field1': 'test1', 'field2': 'test2'}
+        parent = factory.ParentFactory()
+        self.data = {'field1': 'test1', 'field2': 'test2', 'parent_id': parent.pk}
         instance = Child(**self.data)
         serialized = serialize('json', [instance])
         self.approval = factory.ChildApprovalFactory()

@@ -39,7 +39,7 @@ class ChildApprovalFactory(ApprovalFactory):
 
 
 class ParentFactory(factory.django.DjangoModelFactory):
-    children = factory.SubFactory(CHILD_PATH)
+    name = factory.Sequence(lambda n: 'name-%04d' % n)
 
     class Meta:
         model = Parent
@@ -48,7 +48,8 @@ class ParentFactory(factory.django.DjangoModelFactory):
 class ChildFactory(factory.django.DjangoModelFactory):
     field1 = factory.Sequence(lambda n: 'field1-%04d' % n)
     field2 = factory.Sequence(lambda n: 'field2-%04d' % n)
-    parent = factory.RelatedFactory(ParentFactory, 'children')
+    parent = factory.SubFactory(ParentFactory)
 
     class Meta:
         model = Child
+

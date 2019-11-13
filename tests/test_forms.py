@@ -14,9 +14,11 @@ from django_approval.test_utils.test_app.models import Child
 class UsingApprovalFormTest(TestCase):
 
     def setUp(self):
+        self.parent = factory.ParentFactory()
         self.initial = {
             'field1': 'hello',
-            'field2': 'world'
+            'field2': 'world',
+            'parent': self.parent.pk
         }
         self.request = RequestFactory()
         self.form = forms.ChildModelForm(self.initial, request=self.request)
@@ -26,6 +28,7 @@ class UsingApprovalFormTest(TestCase):
         since this form will prevent any creation of TestModels'''
 
         self.assertEqual(self.form.is_valid(), True, self.form.errors)
+        self.initial['parent'] = self.parent
         test_inst = Child(**self.initial)
         serialized = serialize('json', [test_inst])
         instance = self.form.save()
@@ -40,11 +43,13 @@ class UsingApprovalFormTest(TestCase):
 
     def test_approval_for_existing_object(self):
         '''An existing object will create an approval to update that object'''
+        self.initial['parent'] = self.parent
         test_inst = Child(**self.initial)
         test_inst.save()
         data = {'field1': 'update', 'field2': 'update2'}
-        updated_obj = Child(id=test_inst.pk, **data)
+        updated_obj = Child(id=test_inst.pk, **data, parent=self.parent)
         serialized = serialize('json', [updated_obj])
+        data['parent'] = self.parent.pk
         form = forms.ChildModelForm(data=data, instance=test_inst)
 
         self.assertEqual(form.is_valid(), True, form.errors)
