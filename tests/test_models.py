@@ -16,7 +16,7 @@ class ApprovalModelTest(TestCase):
         parent = factory.ParentFactory()
         self.data = {'field1': 'test1', 'field2': 'test2', 'parent_id': parent.pk}
         instance = Child(**self.data)
-        serialized = serialize('json', [instance])
+        serialized = serialize('python', [instance])
         self.approval = factory.ChildApprovalFactory()
         self.test_inst = Child.objects.first()
         self.user = factory.UserFactory()

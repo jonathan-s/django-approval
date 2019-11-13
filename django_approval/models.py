@@ -41,8 +41,9 @@ class Approval(TimeStampedModel):
         help_text=_('The reason for this change'),
         blank=True
     )
-    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     source = JSONField(encoder=DjangoJSONEncoder, help_text='The fields as they would be saved.')
+    # created_by
 
     # contains html output of a diff for all fields.
     # possibly we would like the diff to be compared with current
@@ -61,6 +62,11 @@ class Approval(TimeStampedModel):
             'content_type__app_label',
             'content_type__model',
             'object_id'
+        )
+
+    def __str__(self):
+        return '{} approval obj id:{}'.format(
+            str(self.content_type).title(), self.object_id
         )
 
     def natural_key(self):
@@ -85,7 +91,11 @@ class Approval(TimeStampedModel):
             self.save()
             return
 
-        deserialized_obj = next(deserialize('json', self.source))
+        try:
+            deserialized_obj = next(deserialize('python', self.source))
+        except TypeError:
+            raise ValueError('Source is not of a model format: {}'.format(self.source))
+
         obj = deserialized_obj.object
         obj.save()
         self.changed_by = user

@@ -95,13 +95,19 @@ class ParentApprovalAdmin(admin.ModelAdmin):
 
 class ApprovalInlineModelAdmin(GenericInlineModelAdmin):
     formset = forms.ApprovalGenericInlineFormset
-
     approval_for = None
+    readonly_fields = (
+        'status',
+        'action',
+        'approval',
+    )
 
     def __init__(self, *args, **kwargs):
         if self.approval_for is None:
             msg = _('You need to specify: approval_for, the model for which this is an approval')
             raise RuntimeError(msg)
+        self.verbose_name_plural = f'{self.approval_for._meta.model_name} approvals'
+        self.verbose_name = f'{self.approval_for._meta.model_name} approval'
         super().__init__(*args, **kwargs)
 
     def get_queryset(self, request):
