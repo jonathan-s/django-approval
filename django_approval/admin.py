@@ -3,13 +3,15 @@ from urllib.parse import urlencode
 from django.apps import apps
 from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericInlineModelAdmin
+from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import redirect
-from django.urls import reverse
+from django.urls import reverse, resolve
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from django_approval.models import Approval
 from django_approval.choices import Status
+from django_approval import forms
 
 APPROVE_NAME = 'approve'
 REJECT_NAME = 'reject'
@@ -90,29 +92,51 @@ class ParentApprovalAdmin(admin.ModelAdmin):
         name = 'admin:' + get_admin_name(self.model, 'change')
         return redirect(name, self.current_pk)
 
-    # we need to change the formset.
-    # I think we need to change the formset.
-    # formset = BaseGenericInlineFormSetpass
-
-    # the formset actually only shows us objects for our target object.
 
 class ApprovalInlineModelAdmin(GenericInlineModelAdmin):
-    pass
+    formset = forms.ApprovalGenericInlineFormset
 
-
-class ApprovalStackedInline(ApprovalInlineModelAdmin):
-    template = 'admin/edit_inline/stacked.html'
-
-
-class ApprovalTabularInline(ApprovalInlineModelAdmin):
-    template = 'admin/edit_inline/tabular.html'
-    parent_inline_model = None
+    approval_for = None
 
     def __init__(self, *args, **kwargs):
-        if self.parent_inline_model is None:
-            msg = _('You need to specify parent_inline_model')
+        if self.approval_for is None:
+            msg = _('You need to specify: approval_for, the model for which this is an approval')
             raise RuntimeError(msg)
         super().__init__(*args, **kwargs)
+
+    def get_queryset(self, request):
+        def get_field_names(fields):
+            for field in fields:
+                if field.is_relation and hasattr(field.related_model, 'approvals'):
+                    yield (field.related_model, field.remote_field.name)
+
+        resolved = resolve(request.path)
+        object_id = resolved.kwargs['object_id']
+        # removes the actual name of view
+        app = resolved.url_name.split('_')[:-1]
+        # assumption is that there will never be underscores in class names
+        model_name = app[-1]
+        app_name = '_'.join(app[:-1])
+
+        ParentModel = apps.get_model(app_name, model_name)
+        fields = ParentModel._meta.get_fields(include_hidden=True)
+        model_queryset = [
+            (Model, Model.objects.filter(**{'{}_id'.format(name): object_id}))
+            for (Model, name) in get_field_names(fields)
+            if Model == self.approval_for
+        ]
+        assert(len(model_queryset), 1, 'There should only ever be one model with the same name')
+        Model, queryset = model_queryset[0]
+        content_type = ContentType.objects.get_for_model(Model)
+
+        qs = super().get_queryset(request)
+        # above queryset gives us all approvals, we filter out all approvals
+        # except the ones related to the model in `approval_for`
+        qs = qs.filter(**{
+            self.ct_field: content_type,
+            '{}__in'.format(self.ct_fk_field): queryset,
+        })
+        return qs
 
     @mark_safe
     def approval(self, obj):
@@ -141,7 +165,15 @@ class ApprovalTabularInline(ApprovalInlineModelAdmin):
     approval.short_description = 'Decide'
 
 
-class ApprovalAdmin(admin.ModelAdmin):
+class ApprovalStackedInline(ApprovalInlineModelAdmin):
+    template = 'admin/edit_inline/stacked.html'
+
+
+class ApprovalTabularInline(ApprovalInlineModelAdmin):
+    template = 'admin/edit_inline/tabular.html'
+
+
+class ApprovalModelAdmin(admin.ModelAdmin):
     '''
     The admin that would contain all approvals for all models.
 

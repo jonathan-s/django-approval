@@ -1,9 +1,25 @@
 from django import forms
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.forms import BaseGenericInlineFormSet
 from django.core.serializers import serialize
 
 from .models import Approval
 from .choices import Action, Status
+
+
+class ApprovalGenericInlineFormset(BaseGenericInlineFormSet):
+    '''The normal GenericInlineFormset gets in our way. We want to collect
+    all approvals for a single inline formset in one slot.'''
+
+    # it might be better to just inherit from basemodelformset instead
+
+    def __init__(self, data=None, files=None, instance=None, save_as_new=False,
+                 prefix=None, queryset=None, **kwargs):
+        original_qs = queryset
+        super().__init__(queryset=queryset, data=data, files=files, prefix=prefix, **kwargs)
+        if self.model == Approval:
+            # for approval we have an already modified queryset
+            self.queryset = original_qs
 
 
 class FormUsingApproval(forms.ModelForm):
