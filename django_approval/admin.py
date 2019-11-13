@@ -75,7 +75,7 @@ class ParentApprovalAdmin(admin.ModelAdmin):
         return added_urls + urls
 
     def reject(self, request, *args, **kwargs):
-        pk = request.GET.get('approval_id')
+        pk = kwargs.get('approval_id')
         obj = Approval.objects.get(pk=pk)
         obj.reject(user=request.user)
 
@@ -84,7 +84,7 @@ class ParentApprovalAdmin(admin.ModelAdmin):
         return redirect(name, self.current_pk)
 
     def approve(self, request, *args, **kwargs):
-        pk = request.GET.get('approval_id')
+        pk = kwargs.get('approval_id')
         obj = Approval.objects.get(pk=pk)
         obj.approve(user=request.user)
 
@@ -112,14 +112,16 @@ class ApprovalInlineModelAdmin(GenericInlineModelAdmin):
 
         resolved = resolve(request.path)
         object_id = resolved.kwargs['object_id']
+
         # removes the actual name of view
         app = resolved.url_name.split('_')[:-1]
+
         # assumption is that there will never be underscores in class names
         model_name = app[-1]
         app_name = '_'.join(app[:-1])
 
-        ParentModel = apps.get_model(app_name, model_name)
-        fields = ParentModel._meta.get_fields(include_hidden=True)
+        self.ParentModel = apps.get_model(app_name, model_name)
+        fields = self.ParentModel._meta.get_fields(include_hidden=True)
         model_queryset = [
             (Model, Model.objects.filter(**{'{}_id'.format(name): object_id}))
             for (Model, name) in get_field_names(fields)
@@ -141,12 +143,12 @@ class ApprovalInlineModelAdmin(GenericInlineModelAdmin):
     @mark_safe
     def approval(self, obj):
         approve_url = reverse_admin_name(
-            self.parent_inline_model,
+            self.ParentModel,
             name=APPROVE_NAME,
             kwargs={'approval_id': obj.pk}
         )
         reject_url = reverse_admin_name(
-            self.parent_inline_model,
+            self.ParentModel,
             name=REJECT_NAME,
             kwargs={'approval_id': obj.pk}
         )
