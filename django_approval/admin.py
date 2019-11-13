@@ -40,17 +40,18 @@ def reverse_admin_name(model, name, args=None, kwargs=None, params=None):
     return url
 
 
-class ApprovalInlineModelAdmin(GenericInlineModelAdmin):
-    '''To show approvals as inlines you need to inherit from this'''
+class ParentApprovalAdmin(admin.ModelAdmin):
+    '''ParentApprovalAdmin allows you to have inline modeladmins that uses approvals'''
     parent_fk = None
 
     def __init__(self, *args, **kwargs):
         if not self.parent_fk:
+            pass
             # we might be able to figure this one out.
             # because we have self.model
             # can we get page we are at here somewhere...
             # assume that we have an attribute current_pk
-            raise RuntimeError('We need the name of the relation')
+            # raise RuntimeError('We need the name of the relation')
         super().__init__(*args, **kwargs)
 
     def get_urls(self):
@@ -94,6 +95,9 @@ class ApprovalInlineModelAdmin(GenericInlineModelAdmin):
     # formset = BaseGenericInlineFormSetpass
 
     # the formset actually only shows us objects for our target object.
+
+class ApprovalInlineModelAdmin(GenericInlineModelAdmin):
+    pass
 
 
 class ApprovalStackedInline(ApprovalInlineModelAdmin):

@@ -23,12 +23,36 @@ DATABASES = {
 ROOT_URLCONF = "tests.urls"
 
 INSTALLED_APPS = [
+    "django.contrib.admin",
     "django.contrib.auth",
+    'django.contrib.messages',
     "django.contrib.contenttypes",
     "django.contrib.sites",
     'django.contrib.sessions',
+    "django.contrib.staticfiles",
     "django_approval",
     "django_approval.test_utils.test_app"
 ]
 
+MIDDLEWARE = [
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+]
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.contrib.messages.context_processors.messages',
+                'django.contrib.auth.context_processors.auth'
+            ]
+        }
+    },
+]
+
+STATIC_URL = '/static/'
 SITE_ID = 1
