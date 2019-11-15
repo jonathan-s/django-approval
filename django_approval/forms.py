@@ -58,6 +58,7 @@ class FormUsingApproval(forms.ModelForm):
             approval = Approval.objects.create(
                 object_id=self.instance.pk,
                 content_type=content_type,
+                author=user,
                 action=action,
                 status=Status.none,
                 comment='',  # fix this later
