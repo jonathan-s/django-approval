@@ -41,8 +41,11 @@ class Approval(TimeStampedModel):
         help_text=_('The reason for this change'),
         blank=True
     )
-    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    source = JSONField(encoder=DjangoJSONEncoder, help_text='The fields as they would be saved.')
+    author = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        help_text=_('The user who authored the change')
+    )
+    source = JSONField(encoder=DjangoJSONEncoder, help_text=_('The fields as they would be saved.'))
     # created_by
 
     # contains html output of a diff for all fields.

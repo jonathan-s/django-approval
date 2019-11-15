@@ -93,7 +93,7 @@ class ApprovalInlineModelAdmin(GenericInlineModelAdmin):
     readonly_fields = (
         'action',
         'approval',
-        'changed_by',
+        'author',
         'content_object',
         'created',
         'status',
@@ -104,7 +104,7 @@ class ApprovalInlineModelAdmin(GenericInlineModelAdmin):
             'fields': (
                 'created',
                 'content_object',
-                'changed_by',
+                'author',
                 'comment',
                 'action',
                 'status',
@@ -276,7 +276,7 @@ class ApprovalModelAdmin(admin.ModelAdmin):
     list_filter = [ModelFilter, ActionFilter, StatusFilter]
     list_display = [
         '__str__',
-        'changed_by',
+        'author',
         'action',
         'status',
     ]
@@ -286,14 +286,14 @@ class ApprovalModelAdmin(admin.ModelAdmin):
         'content_type',
         'action',
         'status',
-        'changed_by'
+        'author'
     ]
     fieldsets = (
         (None, {
             'fields': (
                 ('created', 'content_type', 'content_object'),
                 ('action', 'status'),
-                ('comment', 'changed_by'),
+                ('comment', 'author'),
             )
         }),
     )
