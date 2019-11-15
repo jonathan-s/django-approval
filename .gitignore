@@ -36,6 +36,7 @@ htmlcov
 .mr.developer.cfg
 .project
 .pydevproject
+Pipfile.lock
 
 # Pycharm/Intellij
 .idea

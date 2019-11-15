@@ -40,7 +40,7 @@ def reverse_admin_name(model, name, args=None, kwargs=None, params=None):
     name = get_admin_name(model, name)
     url = reverse('admin:{}'.format(name), args=args, kwargs=kwargs)
     if params:
-        url = f'{url}?{urlencode(params)}'
+        url = '{url}?{params}'.format(url=url, params=urlencode(params))
     return url
 
 
@@ -124,8 +124,8 @@ class ApprovalInlineModelAdmin(GenericInlineModelAdmin):
         if self.approval_for is None:
             msg = _('You need to specify: approval_for, the model for which this is an approval')
             raise RuntimeError(msg)
-        self.verbose_name_plural = f'{self.approval_for._meta.model_name} approvals'
-        self.verbose_name = f'{self.approval_for._meta.model_name} approval'
+        self.verbose_name_plural = '{} approvals'.format(self.approval_for._meta.model_name)
+        self.verbose_name = '{} approval'.format(self.approval_for._meta.model_name)
         super().__init__(*args, **kwargs)
 
     def get_field_names(self, fields):
@@ -191,9 +191,9 @@ class ApprovalInlineModelAdmin(GenericInlineModelAdmin):
         )
         approve_text = _('Approve')
         reject_text = _('Reject')
-        approve = f'<a href="{approve_url}">{approve_text}</a>'
-        reject = f'<a href="{reject_url}">{reject_text}</a>'
-        link = f'{approve} / {reject}'
+        approve = '<a href="{}">{}</a>'.format(approve_url, approve_text)
+        reject = '<a href="{}">{}</a>'.format(reject_url, reject_text)
+        link = '{} / {}'.format(approve, reject)
         action_taken = any([
             obj.status == Status.rejected,
             obj.status == Status.approved

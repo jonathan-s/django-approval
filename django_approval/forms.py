@@ -27,6 +27,8 @@ class FormUsingApproval(forms.ModelForm):
     For any model that is using approvals it needs to inherit from this form.
     '''
 
+    # should have a comment field here...?
+
     def __init__(self, *args, **kwargs):
         if not hasattr(self.Meta.model, 'approvals'):
             raise RuntimeError('Model does not inherit from ApprovableModelMixin')

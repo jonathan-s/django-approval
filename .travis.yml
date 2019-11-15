@@ -2,18 +2,19 @@
 
 language: python
 
-python:
-  - "3.6"
-
-env:
-  - TOX_ENV=py36-django-20
-  - TOX_ENV=py35-django-20
-  - TOX_ENV=py34-django-20
+services:
+  - postgresql
 
 matrix:
-  fast_finish: true
+  include:
+  - python: "3.5"
+    env: TOX_ENV=py35-django-20
+  - python: "3.6"
+    env: TOX_ENV=py36-django-20
 
-# command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
+before_script:
+  - psql -c 'create database django_approval;' -U postgres
+
 install: pip install pipenv && pipenv install --dev
 
 # command to run tests using coverage, e.g. python setup.py test

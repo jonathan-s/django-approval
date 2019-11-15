@@ -11,13 +11,11 @@ factory_boy = "*"
 flake8 = ">=2.1.0"
 mock = "*"
 psycopg2 = "*"
-tox = ">=1.7.0"
+tox = "<=3.7.0"
 twine  = "*"
 wheel= "*"
+tox-pipenv = "*"
 
 [packages]
 django-choices = "*"
 django-model-utils = ">=2.0"
-
-[requires]
-python_version = "3.6"
