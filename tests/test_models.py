@@ -4,7 +4,6 @@
 from django.test import TestCase
 from django.core.serializers import serialize
 
-from django_approval import models
 from django_approval.choices import Status, Action
 from django_approval.test_utils import factories as factory
 from django_approval.test_utils.test_app.models import Child

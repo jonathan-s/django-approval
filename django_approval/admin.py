@@ -56,6 +56,10 @@ class ParentApprovalAdmin(admin.ModelAdmin):
             # raise RuntimeError('We need the name of the relation')
         super().__init__(*args, **kwargs)
 
+    def get_object(self, request, object_id, from_field=None):
+        self.current_pk = object_id
+        return super().get_object(request, object_id, from_field)
+
     def get_urls(self):
         from django.urls import path
         urls = super().get_urls()
@@ -96,6 +100,7 @@ class ParentApprovalAdmin(admin.ModelAdmin):
 class ApprovalInlineModelAdmin(GenericInlineModelAdmin):
     formset = forms.ApprovalGenericInlineFormset
     approval_for = None
+    extra = 0
     readonly_fields = (
         'status',
         'action',
@@ -110,14 +115,22 @@ class ApprovalInlineModelAdmin(GenericInlineModelAdmin):
         self.verbose_name = f'{self.approval_for._meta.model_name} approval'
         super().__init__(*args, **kwargs)
 
-    def get_queryset(self, request):
-        def get_field_names(fields):
-            for field in fields:
-                if field.is_relation and hasattr(field.related_model, 'approvals'):
-                    yield (field.related_model, field.remote_field.name)
+    def get_field_names(self, fields):
+        for field in fields:
+            if field.is_relation and hasattr(field.related_model, 'approvals'):
+                yield (field.related_model, field.remote_field.name)
 
+    def parent_fk_name(self):
+        '''Depends on the method get_queryset'''
+        fields = self.ParentModel._meta.get_fields(include_hidden=True)
+        for model, name in self.get_field_names(fields):
+            if model == self.approval_for:
+                yield name
+
+    def get_queryset(self, request):
         resolved = resolve(request.path)
         object_id = resolved.kwargs['object_id']
+        Model = self.approval_for
 
         # removes the actual name of view
         app = resolved.url_name.split('_')[:-1]
@@ -127,16 +140,11 @@ class ApprovalInlineModelAdmin(GenericInlineModelAdmin):
         app_name = '_'.join(app[:-1])
 
         self.ParentModel = apps.get_model(app_name, model_name)
-        fields = self.ParentModel._meta.get_fields(include_hidden=True)
-        model_queryset = [
-            (Model, Model.objects.filter(**{'{}_id'.format(name): object_id}))
-            for (Model, name) in get_field_names(fields)
-            if Model == self.approval_for
-        ]
-        assert(len(model_queryset), 1, 'There should only ever be one model with the same name')
-        Model, queryset = model_queryset[0]
-        content_type = ContentType.objects.get_for_model(Model)
 
+        parent_field_fk = '{}_id'.format(next(self.parent_fk_name()))
+        queryset = Model.objects.filter(**{parent_field_fk: object_id})
+
+        content_type = ContentType.objects.get_for_model(Model)
         qs = super().get_queryset(request)
         # above queryset gives us all approvals, we filter out all approvals
         # except the ones related to the model in `approval_for`

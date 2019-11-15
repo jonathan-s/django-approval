@@ -6,7 +6,7 @@ from django.contrib.postgres.fields import JSONField
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
-from django.core.serializers import deserialize
+from django.core.serializers import deserialize, serialize
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import gettext_lazy as _
 
@@ -77,6 +77,10 @@ class Approval(TimeStampedModel):
         return apps.get_model(
             self.content_object.app_name, self.content_object.model
         )
+
+    @property
+    def serialized_object(self):
+        return serialize('python', [self.content_object])
 
     @transaction.atomic
     def approve(self, user=None):

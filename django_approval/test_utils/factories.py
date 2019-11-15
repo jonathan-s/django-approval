@@ -12,6 +12,8 @@ CHILD_PATH = 'django_approval.test_utils.factories.ChildFactory'
 
 class UserFactory(factory.django.DjangoModelFactory):
     first_name = 'Adam'
+    is_superuser = True
+    is_staff = True
 
     class Meta:
         model = User
