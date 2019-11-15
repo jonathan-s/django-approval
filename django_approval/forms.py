@@ -28,12 +28,10 @@ class FormUsingApproval(forms.ModelForm):
     '''
 
     def __init__(self, *args, **kwargs):
+        if not hasattr(self.Meta.model, 'approvals'):
+            raise RuntimeError('Model does not inherit from ApprovableModelMixin')
         self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
-
-    def need_approval(self):
-        """By default we always need approval when using this form"""
-        return True
 
     def save(self, commit=True):
         """can compare initial with cleaned_data
@@ -50,12 +48,13 @@ class FormUsingApproval(forms.ModelForm):
 
         # make a diff to figure out if there is a change.
         # if we don't have a pk for instance it's definitely a new
+        user = getattr(self.request, 'user', None)
 
         content_type = ContentType.objects.get_for_model(self.Meta.model)
         action = Action.update if self.instance.pk else Action.create
         source = serialize('json', [self.instance])
 
-        if self.need_approval():
+        if self.Meta.model.need_approval(user):
             approval = Approval.objects.create(
                 object_id=self.instance.pk,
                 content_type=content_type,

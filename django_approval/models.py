@@ -114,5 +114,17 @@ class Approval(TimeStampedModel):
 
 
 class ApprovableModelMixin:
+    '''put need approval on the model
+
+    permission by user.
+    staff_user?
+
+    '''
+
     approvals = GenericRelation(Approval)
+
+    @classmethod
+    def need_approval(cls, user):
+        '''Permission by user'''
+        return True
 
