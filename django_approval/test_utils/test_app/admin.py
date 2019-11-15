@@ -22,8 +22,3 @@ class ParentAdmin(ParentApprovalAdmin):
     inlines = [
         ChildApprovalAdmin
     ]
-
-
-@admin.register(Approval)
-class ApprovalAdmin(ApprovalModelAdmin):
-    pass

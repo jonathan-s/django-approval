@@ -2,6 +2,7 @@ from urllib.parse import urlencode
 
 from django.apps import apps
 from django.contrib import admin
+from django.contrib.admin import SimpleListFilter
 from django.contrib.contenttypes.admin import GenericInlineModelAdmin
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import redirect
@@ -9,8 +10,9 @@ from django.urls import reverse, resolve
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
+
 from django_approval.models import Approval
-from django_approval.choices import Status
+from django_approval.choices import Status, Action
 from django_approval import forms
 
 APPROVE_NAME = 'approve'
@@ -44,17 +46,6 @@ def reverse_admin_name(model, name, args=None, kwargs=None, params=None):
 
 class ParentApprovalAdmin(admin.ModelAdmin):
     '''ParentApprovalAdmin allows you to have inline modeladmins that uses approvals'''
-    parent_fk = None
-
-    def __init__(self, *args, **kwargs):
-        if not self.parent_fk:
-            pass
-            # we might be able to figure this one out.
-            # because we have self.model
-            # can we get page we are at here somewhere...
-            # assume that we have an attribute current_pk
-            # raise RuntimeError('We need the name of the relation')
-        super().__init__(*args, **kwargs)
 
     def get_object(self, request, object_id, from_field=None):
         self.current_pk = object_id
@@ -83,7 +74,6 @@ class ParentApprovalAdmin(admin.ModelAdmin):
         obj = Approval.objects.get(pk=pk)
         obj.reject(user=request.user)
 
-        # how do we redirect back...
         name = 'admin:' + get_admin_name(self.model, 'change')
         return redirect(name, self.current_pk)
 
@@ -92,7 +82,6 @@ class ParentApprovalAdmin(admin.ModelAdmin):
         obj = Approval.objects.get(pk=pk)
         obj.approve(user=request.user)
 
-        # how do we redirect back...
         name = 'admin:' + get_admin_name(self.model, 'change')
         return redirect(name, self.current_pk)
 
@@ -222,31 +211,99 @@ class ApprovalTabularInline(ApprovalInlineModelAdmin):
     template = 'admin/edit_inline/tabular.html'
 
 
+class Filter(SimpleListFilter):
+
+    def choices(self, cl):
+        for lookup, title in self.lookup_choices:
+            yield {
+                'selected': self.value() == lookup,
+                'query_string': cl.get_query_string({
+                    self.parameter_name: lookup,
+                }, []),
+                'display': title,
+            }
+
+    def queryset(self, request, queryset):
+        if self.value() is None:
+            return queryset
+        return queryset.filter(**{self.parameter_name: self.value()})
+
+
+class ModelFilter(Filter):
+    title = _('models')
+    parameter_name = 'model'
+
+    def lookups(self, request, model_admin):
+        qs = (
+            Approval.objects
+            .all().values_list('content_type__model', flat=True)
+            .distinct()
+        )
+
+        return [(None, 'All')] + [(value, value.title()) for value in qs]
+
+    def queryset(self, request, queryset):
+        if self.value() is None:
+            return queryset
+        return queryset.filter(content_type__model=self.value())
+
+
+class StatusFilter(Filter):
+    title = _('status')
+    parameter_name = 'status'
+
+    def lookups(self, request, model_admin):
+        return tuple([(None, 'All')]) + Status.choices
+
+
+class ActionFilter(Filter):
+    title = _('action')
+    parameter_name = 'action'
+
+    def lookups(self, request, model_admin):
+        return tuple([(None, 'All')]) + Action.choices
+
+
+@admin.register(Approval)
 class ApprovalModelAdmin(admin.ModelAdmin):
     '''
-    The admin that would contain all approvals for all models.
-
-    Should be able to filter by model or similar in list view.
-
-    This will contain a view for approve / reject for a certain approval object.
-
-
-    This needs to be in common with approval inline model admin too.
-
-    This will add a field with a link Approve / Reject
-
-    The link sends a get request that updates the approval object associated
-    with our target object. That then creates the real object if approved.
-
     When clicking approve or reject. We know which approval object that we should
     update from. But when the approval object is in "update", there may be
     several "updates" that are conflicting for target object.
 
-    So if we approve an update, all other updates for target object should be
-    rejected.
-
+    Should be able to approve several models in one go.
     '''
-    pass
+    list_filter = [ModelFilter, ActionFilter, StatusFilter]
+    list_display = [
+        '__str__',
+        'changed_by',
+        'action',
+        'status',
+    ]
+    readonly_fields = [
+        'created',
+        'content_object',
+        'content_type',
+        'action',
+        'status',
+        'changed_by'
+    ]
+    fieldsets = (
+        (None, {
+            'fields': (
+                ('created', 'content_type', 'content_object'),
+                ('action', 'status'),
+                ('comment', 'changed_by'),
+            )
+        }),
+    )
+
+    def content_object(self, obj):
+        return obj.content_object
+    content_object.short_description = 'Object'
+
+    def has_add_permission(self, request):
+        return False
 
 
 class ApprovalMixin:

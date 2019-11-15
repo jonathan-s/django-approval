@@ -74,5 +74,10 @@ class ApprovalModelTest(TestCase):
         self.assertEqual(self.approval.status, Status.approved)
 
     def test_test_model_has_approvals(self):
-        '''Test Model has an easily accessible approvals'''
+        '''Test Model has an easily accessible approvals (ModelMixin)'''
+        pass
+
+    def test_approve_one_same_object_id_will_be_rejected(self):
+        '''So if we approve an update, all other updates for target object should be
+    rejected.'''
         pass
