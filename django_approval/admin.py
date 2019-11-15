@@ -102,10 +102,33 @@ class ApprovalInlineModelAdmin(GenericInlineModelAdmin):
     approval_for = None
     extra = 0
     readonly_fields = (
-        'status',
         'action',
         'approval',
+        'changed_by',
+        'content_object',
+        'created',
+        'status',
     )
+
+    fieldsets = (
+        (None, {
+            'fields': (
+                'created',
+                'content_object',
+                'changed_by',
+                'comment',
+                'action',
+                'status',
+                'approval',
+            )
+        }),
+    )
+
+    def has_delete_permission(self, request, obj):
+        return False
+
+    def has_add_permission(self, request, obj):
+        return False
 
     def __init__(self, *args, **kwargs):
         if self.approval_for is None:
@@ -153,6 +176,16 @@ class ApprovalInlineModelAdmin(GenericInlineModelAdmin):
             '{}__in'.format(self.ct_fk_field): queryset,
         })
         return qs
+
+    def created(self, obj):
+        return obj.created
+    created.short_description = 'created on'
+
+    def content_object(self, obj):
+        if not obj.content_object:
+            return 'It\'s not created yet'
+        return obj.content_object
+    content_object.short_description = 'Approval for'
 
     @mark_safe
     def approval(self, obj):
