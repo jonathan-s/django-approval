@@ -89,6 +89,7 @@ class ParentApprovalAdmin(admin.ModelAdmin):
 class ApprovalInlineModelAdmin(GenericInlineModelAdmin):
     formset = forms.ApprovalGenericInlineFormset
     approval_for = None
+    model = Approval
     extra = 0
     readonly_fields = (
         'action',
