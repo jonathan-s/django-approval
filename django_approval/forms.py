@@ -67,22 +67,3 @@ class FormUsingApproval(forms.ModelForm):
             )
             self.instance = approval
         return super().save(commit=commit)
-
-
-class ApprovalForm(forms.ModelForm):
-
-    class Meta:
-        model = Approval
-        fields = '__all__'
-
-    def save(self, commit=True):
-        object_id = self.instance.object_id
-        if commit is True and object_id:
-            Model = self.instance.get_model()
-            obj = Model.objects.get(pk=object_id)
-            # fill all the other fields for instance.
-            obj.save()
-        if commit is True and not object_id:
-            Model = self.instance.get_model()
-            Model.objects.create()  # fill in all arguments from source
-        return super().save(commit=commit)
